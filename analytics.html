@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAktau — Аналитика</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        .analytics-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .analytics-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .analytics-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .analytics-header p {
+            color: #718096;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card.total::before { background: #667eea; }
+        .stat-card.new::before { background: #f59e0b; }
+        .stat-card.processing::before { background: #3b82f6; }
+        .stat-card.completed::before { background: #10b981; }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .timeline-chart {
+            grid-column: 1 / -1;
+        }
+
+        .timeline-chart .chart-container {
+            height: 350px;
+        }
+
+        .insights-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .insight-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f8fafc;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .insight-description {
+            color: #4a5568;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .filter-controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .filter-group select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">Загрузка...</div>
+        </div>
+    </div>
+
+    <div class="analytics-container">
+        <!-- Header -->
+        <div class="analytics-header">
+            <h1>📊 Аналитика SmartAktau</h1>
+            <p>Визуализация данных городских обращений</p>
+            <div class="nav-buttons">
+                <a href="index.html" class="btn btn-secondary">← Главная</a>
+                <a href="admin.html" class="btn btn-secondary">👨‍💼 Админ-панель</a>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-card total scroll-reveal">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Всего обращений</div>
+                <div class="stat-change" id="totalChange"></div>
+            </div>
+
+            <div class="stat-card new scroll-reveal">
+                <div class="stat-icon">🆕</div>
+                <div class="stat-value" id="newCount">0</div>
+                <div class="stat-label">Новые</div>
+                <div class="stat-change" id="newPercent"></div>
+            </div>
+
+            <div class="stat-card processing scroll-reveal">
+                <div class="stat-icon">⚙️</div>
+                <div class="stat-value" id="processingCount">0</div>
+                <div class="stat-label">В обработке</div>
+                <div class="stat-change" id="processingPercent"></div>
+            </div>
+
+            <div class="stat-card completed scroll-reveal">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="completedCount">0</div>
+                <div class="stat-label">Выполнено</div>
+                <div class="stat-change" id="completedPercent"></div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>Период:</label>
+                <select id="periodFilter">
+                    <option value="7">Последние 7 дней</option>
+                    <option value="30" selected>Последние 30 дней</option>
+                    <option value="90">Последние 90 дней</option>
+                    <option value="all">Всё время</option>
+                </select>
+
+                <button id="refreshBtn" class="btn btn-primary">🔄 Обновить</button>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Category Chart -->
+            <div class="chart-card scroll-reveal">
+                <h2>📌 Распределение по категориям</h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Status Chart -->
+            <div class="chart-card scroll-reveal">
+                <h2>📊 Распределение по статусам</h2>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Timeline Chart -->
+            <div class="chart-card timeline-chart scroll-reveal">
+                <h2>📈 Динамика обращений</h2>
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="insights-section scroll-reveal">
+            <h2>💡 Ключевые выводы</h2>
+            <div class="insights-grid" id="insightsContainer">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Analytics Script -->
+    <script type="module" src="js/animations.js"></script>
+    <script type="module" src="js/analytics.js"></script>
+</body>
+</html>

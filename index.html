@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAktau — Город, который слышит жителей</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🏙️ SmartAktau</h1>
+                <p class="tagline">Город, который слышит жителей</p>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center;">
+                    <button id="newComplaintBtn" class="btn btn-primary">
+                        📍 Сообщить о проблеме
+                    </button>
+                    <a href="analytics.html" class="btn" style="background: white; color: #667eea; text-decoration: none;">
+                        📊 Аналитика
+                    </a>
+                    <a href="admin.html" class="btn" style="background: white; color: #667eea; text-decoration: none;">
+                        👨‍💼 Админ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="layout">
+                <!-- Map Section -->
+                <section class="map-section">
+                    <div class="section-header">
+                        <h2>🗺️ Карта проблем</h2>
+                        <p class="hint">Нажмите на карту, чтобы выбрать местоположение</p>
+                    </div>
+                    <div id="map" class="map"></div>
+                </section>
+
+                <!-- Feed Section -->
+                <section class="feed-section">
+                    <div class="section-header">
+                        <h2>📋 Последние обращения</h2>
+                    </div>
+                    <div id="complaintsFeed" class="complaints-feed">
+                        <!-- Complaints will be dynamically inserted here -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Complaint Form Modal -->
+    <div id="complaintModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Новое обращение</h2>
+                <button id="closeModalBtn" class="btn-close">&times;</button>
+            </div>
+
+            <form id="complaintForm" class="complaint-form">
+                <div class="form-group">
+                    <label for="title">Заголовок *</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        required
+                        placeholder="Например: Перебои с водой в 15 микрорайоне"
+                        maxlength="100"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Категория *</label>
+                    <select id="category" name="category" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="water">💧 Водоснабжение</option>
+                        <option value="garbage">🗑️ Мусор</option>
+                        <option value="lighting">💡 Освещение</option>
+                        <option value="roads">🛣️ Дороги</option>
+                        <option value="other">📌 Другое</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Описание проблемы *</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        required
+                        rows="4"
+                        placeholder="Опишите проблему подробнее..."
+                        maxlength="500"
+                    ></textarea>
+                    <span class="char-counter">0/500</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Фото (необязательно)</label>
+                    <input
+                        type="file"
+                        id="photo"
+                        name="photo"
+                        accept="image/*"
+                    >
+                    <div id="photoPreview" class="photo-preview hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Местоположение *</label>
+                    <button type="button" id="getLocationBtn" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">
+                        📍 Определить моё местоположение
+                    </button>
+                    <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        readonly
+                        placeholder="Адрес (определяется автоматически)"
+                        style="margin-bottom: 0.5rem; background: #f8fafc; cursor: not-allowed;"
+                    >
+                    <div class="location-info">
+                        <span id="locationStatusText" class="location-status">
+                            📍 Нажмите на карту или используйте кнопку выше
+                        </span>
+                        <input type="hidden" id="latitude" name="latitude">
+                        <input type="hidden" id="longitude" name="longitude">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Отправить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complaint Detail Modal -->
+    <div id="complaintDetailModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="detailTitle">📋 Детали обращения</h2>
+                <button id="closeDetailModalBtn" class="btn-close">&times;</button>
+            </div>
+
+            <div class="complaint-detail-content" style="padding: 1.5rem;">
+                <!-- Complaint Info -->
+                <div id="complaintInfo" style="margin-bottom: 2rem;">
+                    <!-- Will be populated dynamically -->
+                </div>
+
+                <!-- Comments Section -->
+                <div class="comments-section">
+                    <h3 style="margin-bottom: 1rem;">💬 Комментарии</h3>
+
+                    <!-- Comments List -->
+                    <div id="commentsList" style="margin-bottom: 1.5rem;">
+                        <!-- Will be populated dynamically -->
+                    </div>
+
+                    <!-- Add Comment Form -->
+                    <form id="commentForm" class="comment-form">
+                        <div class="form-group">
+                            <label for="commentAuthor">Ваше имя *</label>
+                            <input
+                                type="text"
+                                id="commentAuthor"
+                                name="commentAuthor"
+                                required
+                                placeholder="Например: Айгуль Каримова"
+                                maxlength="100"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="commentText">Комментарий *</label>
+                            <textarea
+                                id="commentText"
+                                name="commentText"
+                                required
+                                rows="3"
+                                placeholder="Оставьте ваш комментарий..."
+                                maxlength="500"
+                            ></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                💬 Добавить комментарий
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 SmartAktau. Сделаем наш город лучше вместе!</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- App Scripts -->
+    <script type="module" src="config.js"></script>
+    <script type="module" src="js/animations.js"></script>
+    <script type="module" src="js/api.js"></script>
+    <script type="module" src="js/map.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
